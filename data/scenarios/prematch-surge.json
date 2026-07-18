@@ -1,0 +1,29 @@
+{
+  "id": "prematch-surge",
+  "name": "Prematch Surge",
+  "description": "North/East gates spike 45 minutes before kickoff; Metro delay feeds Gate E.",
+  "telemetryDelta": {
+    "zones": {
+      "zone-north": { "density": 0.88, "queueMin": 28, "status": "congested" },
+      "zone-east": { "density": 0.72, "queueMin": 18, "status": "busy" },
+      "zone-west": { "density": 0.65, "queueMin": 14, "status": "busy" },
+      "zone-south": { "density": 0.35, "queueMin": 4, "status": "clear" },
+      "zone-pitch": { "density": 0.1, "queueMin": 0, "status": "clear" }
+    },
+    "transport": [
+      { "hubId": "transport-metro", "etaMin": 18, "mode": "metro", "delayMin": 12 },
+      { "hubId": "transport-bus", "etaMin": 6, "mode": "shuttle", "delayMin": 2 }
+    ],
+    "weather": { "condition": "partly cloudy", "tempC": 24 },
+    "sustainability": { "energyKw": 4200, "wasteFillPct": 48, "transitSharePct": 52 }
+  },
+  "incidents": [
+    {
+      "type": "crowd_surge",
+      "severity": "high",
+      "zoneId": "zone-north",
+      "summary": "Gate A / North Concourse queue ~28 min; East Bowl also building. South Gate D underutilized.",
+      "assignedRole": "ops"
+    }
+  ]
+}

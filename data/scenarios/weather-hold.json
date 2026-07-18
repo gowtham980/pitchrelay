@@ -1,0 +1,32 @@
+{
+  "id": "weather-hold",
+  "name": "Severe Weather Hold",
+  "description": "Lightning proximity forces temporary entry hold and PA guidance.",
+  "telemetryDelta": {
+    "zones": {
+      "zone-north": { "density": 0.6, "queueMin": 20, "status": "busy" },
+      "zone-south": { "density": 0.55, "queueMin": 15, "status": "busy" },
+      "zone-east": { "density": 0.58, "queueMin": 16, "status": "busy" },
+      "zone-west": { "density": 0.5, "queueMin": 12, "status": "busy" }
+    },
+    "weather": {
+      "condition": "thunderstorm",
+      "tempC": 19,
+      "alert": "Severe weather hold — lightning within 8 miles"
+    },
+    "transport": [
+      { "hubId": "transport-metro", "etaMin": 10, "mode": "metro", "delayMin": 5 },
+      { "hubId": "transport-bus", "etaMin": 20, "mode": "shuttle", "delayMin": 15 }
+    ],
+    "sustainability": { "energyKw": 5100, "wasteFillPct": 55, "transitSharePct": 48 }
+  },
+  "incidents": [
+    {
+      "type": "weather",
+      "severity": "critical",
+      "zoneId": "zone-north",
+      "summary": "Lightning hold: pause outdoor queues, keep fans under cover, prepare multi-language PA.",
+      "assignedRole": "ops"
+    }
+  ]
+}

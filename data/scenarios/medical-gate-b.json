@@ -1,0 +1,20 @@
+{
+  "id": "medical-gate-b",
+  "name": "Medical Assist Gate B",
+  "description": "Fan medical assist at Gate B; clear path to AED and elevators.",
+  "telemetryDelta": {
+    "zones": {
+      "zone-east": { "density": 0.7, "queueMin": 12, "status": "busy" },
+      "zone-north": { "density": 0.5, "queueMin": 8, "status": "busy" }
+    }
+  },
+  "incidents": [
+    {
+      "type": "medical",
+      "severity": "high",
+      "zoneId": "zone-east",
+      "summary": "Medical assist requested at Gate B screening lane 2. Conscious adult, possible heat exhaustion.",
+      "assignedRole": "volunteer"
+    }
+  ]
+}
