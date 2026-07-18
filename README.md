@@ -92,6 +92,38 @@ UI (/ /fan /volunteer /ops)
 
 Scenarios: `prematch-surge`, `medical-gate-b`, `weather-hold`.
 
+### Example requests
+
+```bash
+# Fan assist (always pass lang when you know it)
+curl -s -X POST http://localhost:3000/api/assist \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"How do I get to section 142?","role":"fan","lang":"en","ada":true}'
+
+# Spanish ADA
+curl -s -X POST http://localhost:3000/api/assist \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"¿Cómo llego a la sección 142 en silla de ruedas?","role":"fan","lang":"es","ada":true}'
+
+# Decision card from freeform ops prompt
+curl -s -X POST http://localhost:3000/api/decisions \
+  -H 'Content-Type: application/json' \
+  -d '{"prompt":"North gate surge — open overflow and draft PA","role":"ops"}'
+
+# Decision card from incident id (after creating/running a scenario)
+curl -s -X POST http://localhost:3000/api/decisions \
+  -H 'Content-Type: application/json' \
+  -d '{"incidentId":"<id-from-incidents-or-scenario>","role":"ops"}'
+
+# ADA route
+curl -s 'http://localhost:3000/api/route?from=gate-e&to=seat-210&ada=1'
+```
+
+Body fields worth knowing:
+- **assist:** `message` (required), `role` (`fan`|`volunteer`|`ops`), `lang` (`en`|`es`|`fr`), `ada` (boolean), optional `fromNodeId`/`toNodeId`
+- **decisions:** `incidentId` **or** `prompt` (one required), optional `role`
+
+
 ## Demo script (~90s)
 
 1. Home → **Ops** → run **Prematch surge**

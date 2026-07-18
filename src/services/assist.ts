@@ -5,10 +5,34 @@ import { buildGroundedContext } from "./rag";
 import { getLlmMode, llmComplete } from "./llm";
 import { getNode } from "@/domain/graph";
 
-function detectLang(message: string, explicit?: string): string {
-  if (explicit) return explicit.toLowerCase();
-  if (/[¿¡]|cómo|dónde|silla|puerta|sección|baño|gracias/i.test(message)) return "es";
-  if (/où|comment|porte|section|fauteuil|merci/i.test(message)) return "fr";
+export function detectLang(message: string, explicit?: string): string {
+  if (explicit) {
+    const e = explicit.toLowerCase().trim();
+    // Accept common aliases (locale tags, full names)
+    if (e === "locale") return "en";
+    if (e.startsWith("es") || e === "spanish" || e === "spa") return "es";
+    if (e.startsWith("fr") || e === "french" || e === "fra") return "fr";
+    if (e.startsWith("en") || e === "english" || e === "eng") return "en";
+    return e.slice(0, 2);
+  }
+  const m = message;
+  // Spanish: strong cues only (accents, inverted punctuation, clear ES words)
+  if (
+    /[¿¡]/.test(m) ||
+    /\b(cómo|como|dónde|donde|silla|puerta|sección|seccion|baño|bano|gracias|llegar|ascensor)\b/i.test(m)
+  ) {
+    return "es";
+  }
+  // French: do NOT match bare English "section" (common stadium copy).
+  // Prefer accents + clear FR function words / PMR terms.
+  if (
+    /[àâäéèêëïîôùûüçœ]/i.test(m) ||
+    /\b(où|comment|s['']il|fauteuil|ascenseur|merci|itinéraire|itineraire|porte\s+\w+|la\s+section|vers\s+la)\b/i.test(
+      m,
+    )
+  ) {
+    return "fr";
+  }
   return "en";
 }
 
