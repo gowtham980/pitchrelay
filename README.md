@@ -176,6 +176,9 @@ Health check: `GET /api/health`
 
 ## Architecture
 
+
+See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for layering rules and key flows.
+
 ```
 UI (/ /fan /volunteer /ops)
   → services (assist, decisions, incidents, scenarios, rag, llm)
@@ -269,15 +272,14 @@ PitchRelay is a **hackathon demo**, not a production SOC. Security posture is in
 
 | Area | What we ship |
 |------|----------------|
-| Code quality | Layered TS (`app` → `services` → `domain` → `data`), Zod Decision Cards, readable modules |
+| Code quality | Layered TS + hooks; strict TS (`noUncheckedIndexedAccess`); ESLint; pure templates; [ARCHITECTURE.md](./docs/ARCHITECTURE.md) |
 | Security | Validation, rate limits, optional write key, headers, mock-safe GenAI |
 | Efficiency | ~34-node graph Dijkstra, keyword RAG, mock LLM, Cloud Run scale-to-zero |
-| Testing | Vitest: router/ADA, schema, RAG, risk, lang detect, security, API smoke |
+| Testing | Vitest **45** tests: router/ADA, schema, RAG, risk, lang, templates, security, API smoke, MinHeap |
 | Accessibility | ADA pathfinding (tested), EN/ES/FR assist, skip link, `aria-current`, map description, `prefers-reduced-motion`, min 44px targets |
 
 ```bash
-npm test   # full suite
-npm run build
+npm run verify   # typecheck + tests + production build
 ```
 
 
