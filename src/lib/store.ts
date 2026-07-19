@@ -1,3 +1,8 @@
+/**
+ * In-memory venue state singleton.
+ * Held on `globalThis` so Next.js hot reload / multi-module imports share one copy
+ * in dev; production is still process-local (not multi-replica safe).
+ */
 import fs from "fs";
 import { dataPath } from "./paths";
 import { nowIso, uid } from "./utils";
@@ -17,7 +22,8 @@ interface VenueState {
   initialized: boolean;
 }
 
-const globalForStore = globalThis as unknown as { __pitchrelayStore?: VenueState };
+type StoreGlobal = typeof globalThis & { __pitchrelayStore?: VenueState };
+const globalForStore = globalThis as StoreGlobal;
 
 function loadGraph(): StadiumGraph {
   const p = dataPath("venue", "unity-arena.graph.json");
@@ -142,7 +148,7 @@ export function listDecisionCards(): DecisionCard[] {
 /** Mild random walk on telemetry for live feel */
 export function tickTelemetry(intensity = 1): TelemetrySnapshot {
   const store = getStore();
-  const t = structuredClone(store.telemetry) as TelemetrySnapshot;
+  const t: TelemetrySnapshot = structuredClone(store.telemetry);
   t.ts = nowIso();
 
   for (const id of Object.keys(t.zones)) {
@@ -181,7 +187,7 @@ export function mergeTelemetryDelta(delta: Partial<TelemetrySnapshot> & {
   zones?: Record<string, Partial<TelemetrySnapshot["zones"][string]>>;
 }): TelemetrySnapshot {
   const store = getStore();
-  const t = structuredClone(store.telemetry) as TelemetrySnapshot;
+  const t: TelemetrySnapshot = structuredClone(store.telemetry);
   t.ts = nowIso();
 
   if (delta.zones) {

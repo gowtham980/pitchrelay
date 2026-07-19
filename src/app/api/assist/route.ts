@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { AssistBodySchema } from "@/domain/decisionSchema";
-import { runAssist } from "@/services/assist";
+import { jsonOk, parseJsonBody } from "@/lib/api";
 import { rateLimit } from "@/lib/security";
+import { runAssist } from "@/services/assist";
 
 export const dynamic = "force-dynamic";
 
@@ -10,16 +11,10 @@ export async function POST(req: Request) {
   if (limited) return limited;
 
   try {
-    const body = await req.json();
-    const parsed = AssistBodySchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid body", details: parsed.error.flatten() },
-        { status: 400 },
-      );
-    }
+    const parsed = await parseJsonBody(req, AssistBodySchema);
+    if (parsed.response) return parsed.response;
     const result = await runAssist(parsed.data);
-    return NextResponse.json(result);
+    return jsonOk(result);
   } catch (err) {
     console.error("[api/assist]", err);
     return NextResponse.json(

@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { dataPath } from "@/lib/paths";
 import { addIncident, mergeTelemetryDelta } from "@/lib/store";
-import type { Role, Severity, TelemetrySnapshot } from "@/domain/types";
+import type { DecisionCard, Incident, Role, Severity, TelemetrySnapshot } from "@/domain/types";
 import { generateDecisionCard } from "./decisions";
 
 export interface ScenarioFile {
@@ -36,19 +36,24 @@ export function getScenario(id: string): ScenarioFile | undefined {
   return listScenarios().find((s) => s.id === id);
 }
 
-export async function runScenario(id: string) {
+export async function runScenario(id: string): Promise<{
+  scenario: { id: string; name: string; description: string };
+  telemetry?: TelemetrySnapshot;
+  incidents: Incident[];
+  decisionCards: DecisionCard[];
+}> {
   const scenario = getScenario(id);
   if (!scenario) {
     throw new Error(`Unknown scenario: ${id}`);
   }
 
-  let telemetry = undefined as TelemetrySnapshot | undefined;
+  let telemetry: TelemetrySnapshot | undefined;
   if (scenario.telemetryDelta) {
     telemetry = mergeTelemetryDelta(scenario.telemetryDelta);
   }
 
-  const incidents = [];
-  const cards = [];
+  const incidents: Incident[] = [];
+  const cards: DecisionCard[] = [];
 
   for (const inc of scenario.incidents ?? []) {
     const created = addIncident({

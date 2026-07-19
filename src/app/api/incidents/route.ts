@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
 import { IncidentBodySchema } from "@/domain/decisionSchema";
-import { createIncident, listAllIncidents } from "@/services/incidents";
+import { handleRoute, jsonOk, parseJsonBody } from "@/lib/api";
 import { assertWriteAllowed, rateLimit } from "@/lib/security";
+import { createIncident, listAllIncidents } from "@/services/incidents";
 
 export const dynamic = "force-dynamic";
 
@@ -9,12 +9,9 @@ export async function GET(req: Request) {
   const limited = rateLimit(req, { name: "incidents-get", limit: 120, windowMs: 60_000 });
   if (limited) return limited;
 
-  try {
-    return NextResponse.json({ incidents: listAllIncidents() });
-  } catch (err) {
-    console.error("[api/incidents GET]", err);
-    return NextResponse.json({ error: "Failed to list incidents" }, { status: 500 });
-  }
+  return handleRoute("[api/incidents GET]", "Failed to list incidents", async () =>
+    jsonOk({ incidents: listAllIncidents() }),
+  );
 }
 
 export async function POST(req: Request) {
@@ -23,19 +20,10 @@ export async function POST(req: Request) {
   const denied = assertWriteAllowed(req);
   if (denied) return denied;
 
-  try {
-    const body = await req.json();
-    const parsed = IncidentBodySchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid body", details: parsed.error.flatten() },
-        { status: 400 },
-      );
-    }
+  return handleRoute("[api/incidents POST]", "Failed to create incident", async () => {
+    const parsed = await parseJsonBody(req, IncidentBodySchema);
+    if (parsed.response) return parsed.response;
     const incident = createIncident(parsed.data);
-    return NextResponse.json({ incident }, { status: 201 });
-  } catch (err) {
-    console.error("[api/incidents POST]", err);
-    return NextResponse.json({ error: "Failed to create incident" }, { status: 500 });
-  }
+    return jsonOk({ incident }, { status: 201 });
+  });
 }

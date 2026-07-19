@@ -1,8 +1,21 @@
-import { NextResponse } from "next/server";
-import { advanceTelemetry, readTelemetry } from "@/services/telemetry";
+import { handleRoute, jsonOk } from "@/lib/api";
 import { assertWriteAllowed, rateLimit } from "@/lib/security";
+import { advanceTelemetry, readTelemetry } from "@/services/telemetry";
 
 export const dynamic = "force-dynamic";
+
+function parseIntensity(body: unknown): number {
+  if (
+    body &&
+    typeof body === "object" &&
+    "intensity" in body &&
+    typeof (body as { intensity?: unknown }).intensity === "number" &&
+    Number.isFinite((body as { intensity: number }).intensity)
+  ) {
+    return Math.max(0, Math.min(5, (body as { intensity: number }).intensity));
+  }
+  return 1;
+}
 
 export async function POST(req: Request) {
   const limited = rateLimit(req, { name: "telemetry-tick", limit: 60, windowMs: 60_000 });
@@ -10,23 +23,14 @@ export async function POST(req: Request) {
   const denied = assertWriteAllowed(req);
   if (denied) return denied;
 
-  try {
+  return handleRoute("[api/telemetry/tick]", "Failed to tick telemetry", async () => {
     let intensity = 1;
     try {
-      const body = (await req.json()) as { intensity?: number };
-      if (typeof body.intensity === "number" && Number.isFinite(body.intensity)) {
-        intensity = Math.max(0, Math.min(5, body.intensity));
-      }
+      intensity = parseIntensity(await req.json());
     } catch {
       // empty body ok
     }
     advanceTelemetry(intensity);
-    return NextResponse.json(readTelemetry());
-  } catch (err) {
-    console.error("[api/telemetry/tick]", err);
-    return NextResponse.json(
-      { error: "Failed to tick telemetry" },
-      { status: 500 },
-    );
-  }
+    return jsonOk(readTelemetry());
+  });
 }

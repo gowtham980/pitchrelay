@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { getGraph } from "@/lib/store";
 import { summarizeGraph } from "@/domain/graph";
+import { handleRoute, jsonOk } from "@/lib/api";
 import { rateLimit } from "@/lib/security";
+import { getGraph } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
@@ -9,19 +9,13 @@ export async function GET(req: Request) {
   const limited = rateLimit(req, { name: "venue", limit: 120, windowMs: 60_000 });
   if (limited) return limited;
 
-  try {
+  return handleRoute("[api/venue]", "Failed to load venue graph", async () => {
     const graph = getGraph();
     const summary = summarizeGraph(graph);
-    return NextResponse.json({
+    return jsonOk({
       ...summary,
       nodes: graph.nodes,
       edges: graph.edges,
     });
-  } catch (err) {
-    console.error("[api/venue]", err);
-    return NextResponse.json(
-      { error: "Failed to load venue graph" },
-      { status: 500 },
-    );
-  }
+  });
 }

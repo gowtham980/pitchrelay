@@ -1,58 +1,6 @@
 import { adjacency, getNode } from "./graph";
+import { MinHeap } from "./minHeap";
 import type { GraphEdge, RouteResult, StadiumGraph } from "./types";
-
-interface PQItem {
-  id: string;
-  dist: number;
-}
-
-/** Min-heap priority queue for Dijkstra */
-class MinHeap {
-  private data: PQItem[] = [];
-
-  push(item: PQItem) {
-    this.data.push(item);
-    this.bubbleUp(this.data.length - 1);
-  }
-
-  pop(): PQItem | undefined {
-    if (!this.data.length) return undefined;
-    const top = this.data[0];
-    const last = this.data.pop()!;
-    if (this.data.length) {
-      this.data[0] = last;
-      this.bubbleDown(0);
-    }
-    return top;
-  }
-
-  get size() {
-    return this.data.length;
-  }
-
-  private bubbleUp(i: number) {
-    while (i > 0) {
-      const p = Math.floor((i - 1) / 2);
-      if (this.data[p].dist <= this.data[i].dist) break;
-      [this.data[p], this.data[i]] = [this.data[i], this.data[p]];
-      i = p;
-    }
-  }
-
-  private bubbleDown(i: number) {
-    const n = this.data.length;
-    while (true) {
-      let smallest = i;
-      const l = 2 * i + 1;
-      const r = 2 * i + 2;
-      if (l < n && this.data[l].dist < this.data[smallest].dist) smallest = l;
-      if (r < n && this.data[r].dist < this.data[smallest].dist) smallest = r;
-      if (smallest === i) break;
-      [this.data[smallest], this.data[i]] = [this.data[i], this.data[smallest]];
-      i = smallest;
-    }
-  }
-}
 
 function edgeCost(edge: GraphEdge, crowdBoost = 1): number {
   const crowd = edge.crowdFactor ?? 1;
@@ -137,6 +85,19 @@ export function findRoute(
   };
 }
 
+function viaPhrase(kind: GraphEdge["kind"]): string {
+  switch (kind) {
+    case "elevator":
+      return "take elevator";
+    case "ramp":
+      return "use ramp";
+    case "stairs":
+      return "use stairs";
+    default:
+      return "walk";
+  }
+}
+
 function buildSteps(
   graph: StadiumGraph,
   nodeIds: string[],
@@ -152,16 +113,8 @@ function buildSteps(
     const a = getNode(graph, nodeIds[i]);
     const b = getNode(graph, nodeIds[i + 1]);
     if (!edge || !a || !b) continue;
-    const via =
-      edge.kind === "elevator"
-        ? "take elevator"
-        : edge.kind === "ramp"
-          ? "use ramp"
-          : edge.kind === "stairs"
-            ? "use stairs"
-            : "walk";
     steps.push(
-      `From ${a.name}, ${via} to ${b.name} (~${Math.round(edge.weightMeters)} m).`,
+      `From ${a.name}, ${viaPhrase(edge.kind)} to ${b.name} (~${Math.round(edge.weightMeters)} m).`,
     );
   }
   const dest = getNode(graph, nodeIds[nodeIds.length - 1]);
@@ -177,11 +130,9 @@ export function resolveNodeQuery(
   const q = query.toLowerCase().trim();
   if (!q) return undefined;
 
-  // Direct id
   const byId = graph.nodes.find((n) => n.id.toLowerCase() === q);
   if (byId) return byId.id;
 
-  // Name contains
   const byName = graph.nodes.find(
     (n) =>
       n.name.toLowerCase() === q ||
@@ -190,7 +141,6 @@ export function resolveNodeQuery(
   );
   if (byName) return byName.id;
 
-  // Seat section patterns
   const sectionMatch = q.match(/section\s*(\d+)/i) || q.match(/sec(?:ción)?\s*(\d+)/i);
   if (sectionMatch) {
     const id = `seat-${sectionMatch[1]}`;
@@ -203,7 +153,6 @@ export function resolveNodeQuery(
     if (graph.nodes.some((n) => n.id === id)) return id;
   }
 
-  // Keywords
   const keywordMap: Record<string, string[]> = {
     elevator: ["elevator"],
     elevators: ["elevator"],

@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { listScenarios, runScenario } from "@/services/scenarios";
+import { jsonError, jsonOk } from "@/lib/api";
 import { assertWriteAllowed, rateLimit } from "@/lib/security";
+import { listScenarios, runScenario } from "@/services/scenarios";
 
 export const dynamic = "force-dynamic";
 
@@ -9,10 +9,10 @@ export async function GET(req: Request) {
   if (limited) return limited;
 
   try {
-    return NextResponse.json({ scenarios: listScenarios() });
+    return jsonOk({ scenarios: listScenarios() });
   } catch (err) {
     console.error("[api/scenarios GET]", err);
-    return NextResponse.json({ error: "Failed to list scenarios" }, { status: 500 });
+    return jsonError("Failed to list scenarios", 500);
   }
 }
 
@@ -29,14 +29,14 @@ export async function POST(
     const { id } = await ctx.params;
     // Bound id to simple slug form (avoid path tricks if ever re-routed to FS)
     if (!/^[a-z0-9-]{1,64}$/i.test(id)) {
-      return NextResponse.json({ error: "Invalid scenario id" }, { status: 400 });
+      return jsonError("Invalid scenario id", 400);
     }
     const result = await runScenario(id);
-    return NextResponse.json(result);
+    return jsonOk(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Scenario failed";
     const status = message.includes("Unknown") ? 404 : 500;
     console.error("[api/scenarios run]", err);
-    return NextResponse.json({ error: message }, { status });
+    return jsonError(message, status);
   }
 }
