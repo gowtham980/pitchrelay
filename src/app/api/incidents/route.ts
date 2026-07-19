@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { IncidentBodySchema } from "@/domain/decisionSchema";
 import { createIncident, listAllIncidents } from "@/services/incidents";
+import { assertWriteAllowed, rateLimit } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const limited = rateLimit(req, { name: "incidents-get", limit: 120, windowMs: 60_000 });
+  if (limited) return limited;
+
   try {
     return NextResponse.json({ incidents: listAllIncidents() });
   } catch (err) {
@@ -14,6 +18,11 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, { name: "incidents-post", limit: 30, windowMs: 60_000 });
+  if (limited) return limited;
+  const denied = assertWriteAllowed(req);
+  if (denied) return denied;
+
   try {
     const body = await req.json();
     const parsed = IncidentBodySchema.safeParse(body);

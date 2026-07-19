@@ -18,7 +18,9 @@
 - **Ops Console** — zone board, incident inbox, Decision Cards, scenario runner
 - **GenAI** — optional OpenAI / Gemini; **deterministic mock by default**
 - **RAG** over `data/kb/*.md` + graph facts
-- **Vitest** domain tests
+- **Vitest** domain + API smoke + security tests
+- **Demo hardening** — Zod validation, rate limits, optional `DEMO_WRITE_KEY`, security headers
+- **Accessibility** — ADA graph routing + UI focus rings, skip link, live regions, reduced motion
 
 ## Quick start
 
@@ -48,6 +50,41 @@ Generate project image:
 ```bash
 npm run generate:image
 ```
+
+
+## Deploy to Google Cloud Run
+
+Hackathon-friendly public URL via **Cloud Run** (scale-to-zero, HTTPS).
+
+### One-time setup (Mac)
+
+```bash
+# gcloud CLI (already installed if you used brew install --cask google-cloud-sdk)
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+
+# optional: create a fresh project
+# gcloud projects create pitchrelay-demo --name="PitchRelay"
+# gcloud billing projects link pitchrelay-demo --billing-account=BILLING_ACCOUNT_ID
+# gcloud config set project pitchrelay-demo
+```
+
+### Deploy
+
+```bash
+cd ~/.openclaw/workspace/open-source-solver-runs/pitchrelay
+./scripts/deploy-cloudrun.sh
+# or:
+# PROJECT_ID=your-id REGION=us-central1 ./scripts/deploy-cloudrun.sh
+```
+
+This builds with **Cloud Build** from the included `Dockerfile` (no local Docker required), deploys service `pitchrelay`, and prints the HTTPS URL.
+
+- Default GenAI: **mock** (no API keys)
+- Live LLM later: set `LLM_PROVIDER=openai|gemini` and secrets on the service
+- Demo state is **in-memory** → deploy uses `max-instances=1` so Fan/Volunteer/Ops share one process
+
+Health check: `GET /api/health`
 
 ## Use cases
 
@@ -88,7 +125,9 @@ UI (/ /fan /volunteer /ops)
 | GET/POST | `/api/decisions` | list / generate Decision Card |
 | POST | `/api/assist` | fan/volunteer grounded chat |
 | GET | `/api/route?from=&to=&ada=` | pathfinding |
-| POST | `/api/scenarios/:id/run` | demo injectors |
+| POST | `/api/scenarios/:id/run` | demo injectors (write-guarded) |
+
+Mutating POSTs honor optional `DEMO_WRITE_KEY` via `x-demo-key` (or same-origin browser).
 
 Scenarios: `prematch-surge`, `medical-gate-b`, `weather-hold`.
 
@@ -136,6 +175,41 @@ Body fields worth knowing:
 
 - Next.js App Router · TypeScript · Tailwind CSS · Zod · Vitest
 - In-memory venue store (seeded from JSON) · keyword RAG · provider-agnostic LLM client
+
+
+## Demo threat model & evaluation notes
+
+PitchRelay is a **hackathon demo**, not a production SOC. Security posture is intentional and documented.
+
+| Control | Status |
+|---------|--------|
+| Input validation (Zod) | Assist / decisions / incidents bodies |
+| Message size limit | 2000 chars on assist |
+| Rate limiting | Per-IP sliding windows on API routes |
+| Mutating write guard | Optional `DEMO_WRITE_KEY` + same-origin UI exception |
+| Security headers | CSP baseline, `X-Frame-Options`, `nosniff`, Referrer-Policy via middleware |
+| GenAI default | **Mock** — no keys required; live LLM optional with 12s timeout + mock fallback |
+| Secrets | Env only; Gemini uses `x-goog-api-key` header (not query string) |
+| AuthN/AuthZ | Not multi-tenant — single demo store |
+| Persistence | In-memory (resets on cold start) |
+
+**Public deploy tip:** set `DEMO_WRITE_KEY` on Cloud Run so anonymous internet clients cannot mint incidents/scenarios without the key; the in-app UI still works via same-origin fetches.
+
+### Evaluation focus (self-check)
+
+| Area | What we ship |
+|------|----------------|
+| Code quality | Layered TS (`app` → `services` → `domain` → `data`), Zod Decision Cards, readable modules |
+| Security | Validation, rate limits, optional write key, headers, mock-safe GenAI |
+| Efficiency | ~34-node graph Dijkstra, keyword RAG, mock LLM, Cloud Run scale-to-zero |
+| Testing | Vitest: router/ADA, schema, RAG, risk, lang detect, security, API smoke |
+| Accessibility | ADA pathfinding (tested), EN/ES/FR assist, skip link, `aria-current`, map description, `prefers-reduced-motion`, min 44px targets |
+
+```bash
+npm test   # full suite
+npm run build
+```
+
 
 ## License
 

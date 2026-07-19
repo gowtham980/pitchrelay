@@ -1,5 +1,7 @@
 import type { LlmMode } from "@/domain/types";
 
+const LLM_TIMEOUT_MS = 12_000;
+
 export function getLlmMode(): LlmMode {
   const provider = (process.env.LLM_PROVIDER ?? "").toLowerCase();
   if (provider === "mock") return "mock";
@@ -24,6 +26,20 @@ export function getLlmProviderLabel(): string {
 export interface LlmChatMessage {
   role: "system" | "user" | "assistant";
   content: string;
+}
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  ms = LLM_TIMEOUT_MS,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**
@@ -57,7 +73,7 @@ async function openaiComplete(
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new Error("OPENAI_API_KEY missing");
 
-  const res = await fetch(`${base}/chat/completions`, {
+  const res = await fetchWithTimeout(`${base}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`,
@@ -73,7 +89,7 @@ async function openaiComplete(
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`OpenAI error ${res.status}: ${text}`);
+    throw new Error(`OpenAI error ${res.status}: ${text.slice(0, 200)}`);
   }
   const data = (await res.json()) as {
     choices?: Array<{ message?: { content?: string } }>;
@@ -99,10 +115,14 @@ async function geminiComplete(
       parts: [{ text: m.content }],
     }));
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-  const res = await fetch(url, {
+  // Prefer header auth over ?key= query (avoids key in access logs / referrers)
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const res = await fetchWithTimeout(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": key,
+    },
     body: JSON.stringify({
       systemInstruction: system ? { parts: [{ text: system }] } : undefined,
       contents,
@@ -115,7 +135,7 @@ async function geminiComplete(
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Gemini error ${res.status}: ${text}`);
+    throw new Error(`Gemini error ${res.status}: ${text.slice(0, 200)}`);
   }
   const data = (await res.json()) as {
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;

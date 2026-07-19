@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { getGraph } from "@/lib/store";
 import { findRoute, resolveNodeQuery } from "@/domain/router";
+import { rateLimit } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  const limited = rateLimit(req, { name: "route", limit: 120, windowMs: 60_000 });
+  if (limited) return limited;
+
   try {
     const { searchParams } = new URL(req.url);
-    const fromRaw = searchParams.get("from") ?? "";
-    const toRaw = searchParams.get("to") ?? "";
+    const fromRaw = (searchParams.get("from") ?? "").slice(0, 80);
+    const toRaw = (searchParams.get("to") ?? "").slice(0, 80);
     const ada = searchParams.get("ada") === "1" || searchParams.get("ada") === "true";
 
     if (!fromRaw || !toRaw) {

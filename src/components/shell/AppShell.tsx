@@ -48,11 +48,20 @@ export function AppShell({
 
   return (
     <div className="min-h-screen">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-stadium-green focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-stadium-bg"
+      >
+        Skip to main content
+      </a>
       <header className="sticky top-0 z-40 border-b border-white/5 bg-stadium-bg/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-4 py-3">
           <div className="flex items-center gap-4">
             <Link href="/" className="group flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-stadium-green/15 text-stadium-green ring-1 ring-stadium-green/40">
+              <span
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-stadium-green/15 text-stadium-green ring-1 ring-stadium-green/40"
+                aria-hidden
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <path
                     d="M4 12h4l2-6 4 12 2-6h4"
@@ -82,13 +91,17 @@ export function AppShell({
             ) : null}
           </div>
 
-          <nav className="flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1">
+          <nav
+            className="flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1"
+            aria-label="Primary"
+          >
             {roles.map((r) => {
               const active = pathname === r.href || pathname.startsWith(r.href + "/");
               return (
                 <Link
                   key={r.href}
                   href={r.href}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
                     "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors min-h-9 inline-flex items-center",
                     active
@@ -102,18 +115,24 @@ export function AppShell({
             })}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" aria-live="polite">
             <Badge tone={llmMode === "live" ? "green" : "muted"}>
               LLM {llmMode}
             </Badge>
             <Badge tone="blue" className="tabular-nums">
-              <span className="mr-1 h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse-soft" />
+              <span
+                className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse-soft"
+                aria-hidden
+              />
+              <span className="sr-only">Local time </span>
               {clock}
             </Badge>
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-[1400px] px-4 py-5">{children}</main>
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-[1400px] px-4 py-5 outline-none">
+        {children}
+      </main>
     </div>
   );
 }

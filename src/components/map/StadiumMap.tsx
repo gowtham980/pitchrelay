@@ -55,6 +55,19 @@ export function StadiumMap({
   }, [highlightPath]);
 
   const zones = nodes.filter((n) => n.type === "zone");
+  const congested = zones.filter((z) => (telemetry?.zones[z.id]?.density ?? 0) >= 0.75);
+  const pathNames = highlightPath
+    .map((id) => nodeMap.get(id)?.name ?? id)
+    .filter(Boolean);
+  const mapDescription = [
+    "Unity Arena stadium knowledge graph.",
+    congested.length
+      ? `Higher density zones: ${congested.map((z) => z.name).join(", ")}.`
+      : "No high-density zones flagged.",
+    pathNames.length
+      ? `Highlighted route: ${pathNames.join(" to ")}.`
+      : "No route highlighted.",
+  ].join(" ");
 
   return (
     <div
@@ -66,11 +79,15 @@ export function StadiumMap({
       <div className="absolute left-3 top-3 z-10 rounded-lg border border-white/10 bg-black/40 px-2 py-1 text-[10px] uppercase tracking-wider text-stadium-muted backdrop-blur">
         Unity Arena · live graph
       </div>
+      <p className="sr-only" id="stadium-map-desc">
+        {mapDescription}
+      </p>
       <svg
         viewBox="0 0 100 100"
         className={cn("h-full w-full", compact ? "min-h-[220px]" : "min-h-[320px]")}
         role="img"
         aria-label="Stadium knowledge graph map"
+        aria-describedby="stadium-map-desc"
       >
         <defs>
           <radialGradient id="pitchGlow" cx="50%" cy="50%" r="40%">

@@ -2,10 +2,14 @@ import { NextResponse } from "next/server";
 import { DecisionBodySchema } from "@/domain/decisionSchema";
 import { generateDecisionCard } from "@/services/decisions";
 import { listDecisionCards } from "@/lib/store";
+import { assertWriteAllowed, rateLimit } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const limited = rateLimit(req, { name: "decisions-get", limit: 120, windowMs: 60_000 });
+  if (limited) return limited;
+
   try {
     return NextResponse.json({ cards: listDecisionCards() });
   } catch (err) {
@@ -15,6 +19,11 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, { name: "decisions-post", limit: 30, windowMs: 60_000 });
+  if (limited) return limited;
+  const denied = assertWriteAllowed(req);
+  if (denied) return denied;
+
   try {
     const body = await req.json();
     const parsed = DecisionBodySchema.safeParse(body);
