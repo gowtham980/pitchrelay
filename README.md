@@ -8,6 +8,58 @@
 
 **Venue:** *Unity Arena* — original fictional host stadium profile (not affiliated with FIFA).
 
+**Challenge fit:** smart dynamic assistant · context-based decisions · real-world match-day usability · clean maintainable code.
+
+## Submission brief (judges start here)
+
+| Field | Detail |
+|-------|--------|
+| **Repo** | https://github.com/gowtham980/pitchrelay |
+| **Branch** | `main` only (single branch) |
+| **Size** | Tracked source ≪ 10 MB (~0.6 MB) — `node_modules` / `.next` not committed |
+| **Run** | `npm install && npm test && npm run dev` → http://localhost:3000 |
+| **Keys** | **None required** — mock GenAI by default |
+
+### Chosen vertical
+
+**Stadium / tournament operations + fan experience** (FIFA World Cup 2026-style match day).
+
+Personas: **Fan**, **Volunteer**, **Ops/venue staff** — one shared live venue graph, role-appropriate surfaces.
+
+### Approach and logic
+
+1. **Shared stadium knowledge graph** (Unity Arena) is the source of truth — zones, gates, elevators, medical, transport, ADA edges.
+2. **Context → decision**, not freeform chat only:
+   - Fan context (language, ADA, location intent) → grounded assist + route
+   - Ops/volunteer context (incident, telemetry, role) → **Zod-validated Decision Card** (who / what / where / actions / multi-lang comms)
+3. **GenAI is optional and bounded**: mock-first for reliable demos; live OpenAI/Gemini when keyed; outputs validated or fall back to deterministic cards.
+4. **Real-world usability**: 90-second demo path (Prematch surge → Volunteer phrases → Fan ADA/ES route) mirrors match-day coordination lag.
+
+### How the solution works
+
+```
+User (Fan / Volunteer / Ops)
+  → UI pages + scenario runner
+  → API (Zod-validated, rate-limited)
+  → services (assist · decisions · scenarios · rag · llm · telemetry)
+  → domain (Dijkstra ADA router · risk · DecisionCard schema)
+  → data (graph JSON · KB markdown · scenario injectors)
+```
+
+- **Fan Assist:** message + lang + ADA → resolve nodes → pathfind → RAG citations → answer (mock or live).
+- **Ops:** run scenario or prompt → incident + Decision Card with actions/comms/sustainability note.
+- **Volunteer:** task cards, EN/ES/FR phrase chips, escalate to ops on shared state.
+
+### Assumptions
+
+- Unity Arena is a **fictional** host stadium profile (not affiliated with FIFA).
+- Crowd/telemetry is **simulated** (tick + scenarios), not live CCTV/BMS feeds.
+- Single-process **in-memory** store is enough for demo/tabletop; multi-instance sync is out of scope.
+- Judges can evaluate fully **without API keys**; live LLM is an optional upgrade.
+- “Smart assistant” means **grounded, role-aware decision support**, not unrestricted general chat.
+
+---
+
 ## Features
 
 - **Stadium knowledge graph** (Unity Arena) with zones, gates, elevators, medical posts, transport hubs
