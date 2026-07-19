@@ -15,6 +15,7 @@
 | Field | Detail |
 |-------|--------|
 | **Repo** | https://github.com/gowtham980/pitchrelay |
+| **Live demo** | https://pitchrelay-kuw4c4fivq-uc.a.run.app |
 | **Branch** | `main` only (single branch) |
 | **Size** | Tracked source ≪ 10 MB (~0.6 MB) — `node_modules` / `.next` not committed |
 | **Run** | `npm install && npm test && npm run dev` → http://localhost:3000 |
@@ -137,6 +138,23 @@ This builds with **Cloud Build** from the included `Dockerfile` (no local Docker
 - Demo state is **in-memory** → deploy uses `max-instances=1` so Fan/Volunteer/Ops share one process
 
 Health check: `GET /api/health`
+
+### Live demo
+
+**Public Cloud Run:** [https://pitchrelay-kuw4c4fivq-uc.a.run.app](https://pitchrelay-kuw4c4fivq-uc.a.run.app)
+
+| Surface | URL |
+|---------|-----|
+| Home | https://pitchrelay-kuw4c4fivq-uc.a.run.app/ |
+| Fan | https://pitchrelay-kuw4c4fivq-uc.a.run.app/fan |
+| Volunteer | https://pitchrelay-kuw4c4fivq-uc.a.run.app/volunteer |
+| Ops | https://pitchrelay-kuw4c4fivq-uc.a.run.app/ops |
+| Health | https://pitchrelay-kuw4c4fivq-uc.a.run.app/api/health |
+
+- Region: `us-central1` · Project: `gcpdevelopment-464720` · LLM: **mock** (no keys)
+- Mutating APIs protected with `DEMO_WRITE_KEY` for external callers; in-app same-origin UI still works
+
+
 
 ## Use cases
 
