@@ -27,15 +27,17 @@ describe("risk scoring", () => {
   });
 
   it("scores congested zones higher", () => {
-    const high = zoneRiskScore(snap.zones["zone-north"]);
-    const low = zoneRiskScore(snap.zones["zone-south"]);
+    const north = snap.zones["zone-north"]!;
+    const south = snap.zones["zone-south"]!;
+    const high = zoneRiskScore(north);
+    const low = zoneRiskScore(south);
     expect(high).toBeGreaterThan(low);
     expect(scoreToSeverity(high)).toMatch(/high|critical/);
   });
 
   it("ranks zones by risk", () => {
     const ranked = rankZonesByRisk(snap);
-    expect(ranked[0].zoneId).toBe("zone-north");
+    expect(ranked[0]?.zoneId).toBe("zone-north");
   });
 
   it("computes overall venue risk with drivers", () => {

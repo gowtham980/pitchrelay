@@ -125,8 +125,11 @@ export function updateIncident(id: string, patch: Partial<Incident>): Incident |
   const store = getStore();
   const idx = store.incidents.findIndex((i) => i.id === id);
   if (idx < 0) return undefined;
-  store.incidents[idx] = { ...store.incidents[idx], ...patch, id };
-  return store.incidents[idx];
+  const current = store.incidents[idx];
+  if (!current) return undefined;
+  const next: Incident = { ...current, ...patch, id };
+  store.incidents[idx] = next;
+  return next;
 }
 
 export function attachDecisionCard(incidentId: string | undefined, card: DecisionCard) {
@@ -153,6 +156,7 @@ export function tickTelemetry(intensity = 1): TelemetrySnapshot {
 
   for (const id of Object.keys(t.zones)) {
     const z = t.zones[id];
+    if (!z) continue;
     const jitter = (Math.random() - 0.48) * 0.06 * intensity;
     z.density = Math.max(0.05, Math.min(0.98, z.density + jitter));
     z.queueMin = Math.max(

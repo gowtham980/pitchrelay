@@ -23,7 +23,7 @@ describe("DecisionCardSchema", () => {
       confidence: 0.8,
     });
     expect(card.actions.length).toBe(1);
-    expect(card.comms[0].channel).toBe("pa");
+    expect(card.comms[0]?.channel).toBe("pa");
   });
 
   it("rejects missing actions", () => {

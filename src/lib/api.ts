@@ -42,7 +42,7 @@ export async function parseJsonBody<S extends z.ZodTypeAny>(
       ),
     };
   }
-  return { data: parsed.data as z.output<S> };
+  return { data: parsed.data };
 }
 
 /** Wrap an async route body with consistent error logging + JSON 500. */

@@ -109,15 +109,20 @@ function buildSteps(
   if (ada) steps.push("ADA route enabled — elevators/ramps only, no stairs.");
 
   for (let i = 0; i < edgeIds.length; i++) {
-    const edge = edgeMap.get(edgeIds[i]);
-    const a = getNode(graph, nodeIds[i]);
-    const b = getNode(graph, nodeIds[i + 1]);
+    const edgeId = edgeIds[i];
+    const fromId = nodeIds[i];
+    const toId = nodeIds[i + 1];
+    if (!edgeId || !fromId || !toId) continue;
+    const edge = edgeMap.get(edgeId);
+    const a = getNode(graph, fromId);
+    const b = getNode(graph, toId);
     if (!edge || !a || !b) continue;
     steps.push(
       `From ${a.name}, ${viaPhrase(edge.kind)} to ${b.name} (~${Math.round(edge.weightMeters)} m).`,
     );
   }
-  const dest = getNode(graph, nodeIds[nodeIds.length - 1]);
+  const destId = nodeIds[nodeIds.length - 1];
+  const dest = destId ? getNode(graph, destId) : undefined;
   if (dest) steps.push(`Arrive at ${dest.name}.`);
   return steps;
 }
@@ -142,13 +147,13 @@ export function resolveNodeQuery(
   if (byName) return byName.id;
 
   const sectionMatch = q.match(/section\s*(\d+)/i) || q.match(/sec(?:ción)?\s*(\d+)/i);
-  if (sectionMatch) {
+  if (sectionMatch?.[1]) {
     const id = `seat-${sectionMatch[1]}`;
     if (graph.nodes.some((n) => n.id === id)) return id;
   }
 
   const gateMatch = q.match(/gate\s*([a-z])/i) || q.match(/puerta\s*([a-z])/i);
-  if (gateMatch) {
+  if (gateMatch?.[1]) {
     const id = `gate-${gateMatch[1].toLowerCase()}`;
     if (graph.nodes.some((n) => n.id === id)) return id;
   }

@@ -8,14 +8,14 @@ export interface HeapItem {
 export class MinHeap {
   private data: HeapItem[] = [];
 
-  push(item: HeapItem) {
+  push(item: HeapItem): void {
     this.data.push(item);
     this.bubbleUp(this.data.length - 1);
   }
 
   pop(): HeapItem | undefined {
     if (!this.data.length) return undefined;
-    const top = this.data[0];
+    const top = this.data[0]!;
     const last = this.data.pop()!;
     if (this.data.length) {
       this.data[0] = last;
@@ -24,29 +24,40 @@ export class MinHeap {
     return top;
   }
 
-  get size() {
+  get size(): number {
     return this.data.length;
   }
 
-  private bubbleUp(i: number) {
+  private bubbleUp(i: number): void {
     while (i > 0) {
       const p = Math.floor((i - 1) / 2);
-      if (this.data[p].dist <= this.data[i].dist) break;
-      [this.data[p], this.data[i]] = [this.data[i], this.data[p]];
+      const parent = this.data[p];
+      const cur = this.data[i];
+      if (!parent || !cur || parent.dist <= cur.dist) break;
+      this.data[p] = cur;
+      this.data[i] = parent;
       i = p;
     }
   }
 
-  private bubbleDown(i: number) {
+  private bubbleDown(i: number): void {
     const n = this.data.length;
     while (true) {
       let smallest = i;
       const l = 2 * i + 1;
       const r = 2 * i + 2;
-      if (l < n && this.data[l].dist < this.data[smallest].dist) smallest = l;
-      if (r < n && this.data[r].dist < this.data[smallest].dist) smallest = r;
+      const cur = this.data[smallest];
+      const left = this.data[l];
+      const right = this.data[r];
+      if (l < n && left && cur && left.dist < cur.dist) smallest = l;
+      const smallestItem = this.data[smallest];
+      if (r < n && right && smallestItem && right.dist < smallestItem.dist) smallest = r;
       if (smallest === i) break;
-      [this.data[smallest], this.data[i]] = [this.data[i], this.data[smallest]];
+      const a = this.data[i];
+      const b = this.data[smallest];
+      if (!a || !b) break;
+      this.data[i] = b;
+      this.data[smallest] = a;
       i = smallest;
     }
   }

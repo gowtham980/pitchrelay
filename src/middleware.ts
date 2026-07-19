@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { CONTENT_SECURITY_POLICY, SECURITY_HEADERS } from "@/lib/security-headers";
 
-export function middleware(_req: NextRequest) {
+export function middleware() {
   const res = NextResponse.next();
   for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
     res.headers.set(k, v);

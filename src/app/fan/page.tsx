@@ -1,52 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AppShell } from "@/components/shell/AppShell";
 import { AssistChat } from "@/components/chat/AssistChat";
 import { StadiumMap } from "@/components/map/StadiumMap";
-import type { GraphEdge, GraphNode, TelemetrySnapshot } from "@/domain/types";
 import { Card } from "@/components/ui/Card";
+import { useVenueData } from "@/hooks/useVenueData";
 
 export default function FanPage() {
-  const [nodes, setNodes] = useState<GraphNode[]>([]);
-  const [edges, setEdges] = useState<GraphEdge[]>([]);
-  const [telemetry, setTelemetry] = useState<TelemetrySnapshot | null>(null);
+  const { nodes, edges, telemetry, loading, error } = useVenueData();
   const [path, setPath] = useState<string[]>([]);
   const [ada, setAda] = useState(true);
   const [lang, setLang] = useState("en");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const [v, t] = await Promise.all([
-          fetch("/api/venue").then((r) => r.json()),
-          fetch("/api/telemetry").then((r) => r.json()),
-        ]);
-        if (cancelled) return;
-        setNodes(v.nodes ?? []);
-        setEdges(v.edges ?? []);
-        setTelemetry(t.snapshot ?? null);
-        setError(null);
-      } catch {
-        if (!cancelled) setError("Could not load venue map. Retry shortly.");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   return (
     <AppShell title="Fan" subtitle="Grounded assist + ADA routes">
       {error ? (
-        <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+        <div
+          className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100"
+          role="alert"
+        >
           {error}
         </div>
       ) : null}

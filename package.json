@@ -2,7 +2,7 @@
   "name": "pitchrelay",
   "version": "0.1.0",
   "private": true,
-  "description": "PitchRelay — GenAI stadium ops + fan experience on a live venue knowledge graph (FIFA WC 2026 hackathon)",
+  "description": "PitchRelay \u2014 GenAI stadium ops + fan experience on a live venue knowledge graph (FIFA WC 2026 hackathon)",
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
@@ -11,7 +11,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "next lint",
-    "generate:image": "python3 scripts/generate_project_image.py"
+    "generate:image": "python3 scripts/generate_project_image.py",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "next": "^15.1.0",
@@ -30,7 +32,10 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.1.0",
+    "@eslint/eslintrc": "^3.2.0"
   },
   "engines": {
     "node": ">=20"
